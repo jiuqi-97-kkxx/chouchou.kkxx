@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>臭臭生日快乐</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义主题 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF6B8B',
+                        secondary: '#7B66FF',
+                        accent: '#FFD166',
+                        dark: '#2A2A4A',
+                        light: '#FFF5F8'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Playfair Display', 'serif']
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-slow': 'float 8s ease-in-out infinite',
+                        'float-fast': 'float 4s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 3s infinite',
+                        'spin-slow': 'spin 15s linear infinite'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .text-shadow-lg {
+                text-shadow: 0 4px 8px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
+            }
+            .backdrop-blur {
+                backdrop-filter: blur(8px);
+            }
+            .mask-gradient {
+                mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+                -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+            }
+        }
+    </style>
+    
+    <style>
+        /* 导入字体 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+        
+        /* 全局样式 */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            overflow-x: hidden;
+        }
+        
+        /* 气球动画 */
+        .balloon {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.8;
+            z-index: 0;
+            animation: rise linear infinite;
+        }
+        
+        .balloon::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 15px;
+            background-color: rgba(0,0,0,0.1);
+        }
+        
+        @keyframes rise {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        /* 粒子背景 */
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+        
+        /* 翻转动画 */
+        .flip-card {
+            perspective: 1000px;
+        }
+        
+        .flip-card-inner {
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+        
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+        }
+        
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+        
+        /* 烟花效果 */
+        .firework {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            transform-origin: top center;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-light to-pink-50 min-h-screen font-sans text-dark overflow-x-hidden relative">
+    <!-- 粒子背景容器 -->
+    <div id="particles-js"></div>
+    
+    <!-- 顶部导航 -->
+    <nav class="fixed top-0 left-0 right-0 z-50 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center backdrop-blur bg-white/70 rounded-b-xl shadow-sm">
+            <div class="text-primary font-display font-bold text-xl">生日快乐</div>
+            <div class="flex space-x-6 items-center">
+                <a href="#countdown" class="text-dark/80 hover:text-primary transition-colors duration-300">倒计时</a>
+                <a href="#wishes" class="text-dark/80 hover:text-primary transition-colors duration-300">祝福</a>
+                <a href="#gallery" class="text-dark/80 hover:text-primary transition-colors duration-300">回忆</a>
+                <button id="musicToggle" class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all duration-300">
+                    <i class="fa fa-music"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 主视觉区域 -->
+    <header class="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden">
+        <div class="container mx-auto px-4 z-10 text-center">
+            <h1 class="font-display font-bold text-[clamp(2.5rem,8vw,5rem)] text-dark leading-tight mb-6 opacity-0 transform translate-y-8 transition-all duration-1000" id="mainTitle">
+                生日快乐！
+            </h1>
+            <p class="text-[clamp(1.2rem,3vw,1.8rem)] text-dark/80 max-w-3xl mx-auto mb-12 opacity-0 transform translate-y-8 transition-all duration-1000 delay-300" id="subTitle">
+                愿你每天都充满爱、欢笑与美好的回忆
+            </p>
+            <div class="flex justify-center gap-4 opacity-0 transform translate-y-8 transition-all duration-1000 delay-500" id="ctaButtons">
+                <a href="#wishes" class="px-8 py-3 bg-primary text-white rounded-full shadow-lg hover:shadow-xl hover:bg-primary/90 transform hover:-translate-y-1 transition-all duration-300">
+                    查看祝福
+                </a>
+                <a href="#gallery" class="px-8 py-3 bg-white text-primary border border-primary rounded-full shadow-lg hover:shadow-xl hover:bg-primary/5 transform hover:-translate-y-1 transition-all duration-300">
+                    浏览回忆
+                </a>
+            </div>
+        </div>
+        
+        <!-- 装饰元素 -->
+        <div class="absolute top-20 left-10 w-20 h-20 bg-accent/30 rounded-full blur-xl animate-float-slow"></div>
+        <div class="absolute bottom-20 right-10 w-32 h-32 bg-secondary/20 rounded-full blur-xl animate-float"></div>
+        <div class="absolute top-1/3 right-1/4 w-16 h-16 bg-primary/20 rounded-full blur-xl animate-float-fast"></div>
+    </header>
+    
+    <!-- 倒计时区域 -->
+    <section id="countdown" class="py-20 relative">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="font-display font-bold text-[clamp(1.8rem,5vw,3rem)] text-dark mb-4">
+                    距离下一个生日还有
+                </h2>
+                <p class="text-dark/70 max-w-2xl mx-auto">每一刻都值得珍惜，让我们倒数迎接下一个精彩的开始</p>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-5xl mx-auto">
+                <div class="bg-white rounded-2xl shadow-xl p-6 text-center transform hover:-translate-y-2 transition-all duration-300">
+                    <div class="text-[clamp(2rem,6vw,3.5rem)] font-bold text-primary" id="days">00</div>
+                    <div class="text-dark/60 mt-2">天</div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-xl p-6 text-center transform hover:-translate-y-2 transition-all duration-300">
+                    <div class="text-[clamp(2rem,6vw,3.5rem)] font-bold text-primary" id="hours">00</div>
+                    <div class="text-dark/60 mt-2">时</div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-xl p-6 text-center transform hover:-translate-y-2 transition-all duration-300">
+                    <div class="text-[clamp(2rem,6vw,3.5rem)] font-bold text-primary" id="minutes">00</div>
+                    <div class="text-dark/60 mt-2">分</div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-xl p-6 text-center transform hover:-translate-y-2 transition-all duration-300">
+                    <div class="text-[clamp(2rem,6vw,3.5rem)] font-bold text-primary" id="seconds">00</div>
+                    <div class="text-dark/60 mt-2">秒</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 祝福区域 -->
+    <section id="wishes" class="py-20 bg-gradient-to-br from-primary/5 to-secondary/5 relative">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="font-display font-bold text-[clamp(1.8rem,5vw,3rem)] text-dark mb-4">
+                    特别的祝福
+                </h2>
+                <p class="text-dark/70 max-w-2xl mx-auto">愿你每一天都充满阳光与喜悦</p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto">
+                <!-- 翻转动画卡片 -->
+                <div class="flip-card w-full h-[400px] md:h-[500px] mx-auto">
+                    <div class="flip-card-inner relative w-full h-full">
+                        <!-- 卡片正面 -->
+                        <div class="flip-card-front absolute w-full h-full bg-white rounded-3xl shadow-2xl p-8 md:p-12 flex flex-col justify-center">
+                            <div class="text-center">
+                                <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <i class="fa fa-gift text-3xl text-primary"></i>
+                                </div>
+                                <h3 class="font-display font-bold text-2xl md:text-3xl mb-6">打开这份祝福</h3>
+                                <p class="text-dark/70 mb-8">点击卡片，开启专属于你的生日祝福</p>
+                                <button id="flipButton" class="px-6 py-3 bg-primary text-white rounded-full shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all duration-300 mx-auto">
+                                    点击开启
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 卡片背面 -->
+                        <div class="flip-card-back absolute w-full h-full bg-white rounded-3xl shadow-2xl p-8 md:p-12 flex flex-col justify-center">
+                            <div class="mask-gradient overflow-y-auto h-full">
+                                <p class="text-lg text-dark/80 leading-relaxed mb-6">
+                                    臭臭hero，
+                                </p>
+                                <p class="text-lg text-dark/80 leading-relaxed mb-6">
+                                    在这个特别的日子里，愿所有的美好与幸运都围绕着你。愿你的每一个愿望都能实现，每一个梦想都能绽放。
+                                </p>
+                                <p class="text-lg text-dark/80 leading-relaxed mb-6">
+                                    过去的一年里，你经历了成长与挑战，收获了经验与智慧。新的一岁，愿你继续勇敢地追求自己的热爱，活出最精彩的自己。
+                                </p>
+                                <p class="text-lg text-dark/80 leading-relaxed mb-6">
+                                    无论未来遇到什么，记得身边总有关心你的人。愿快乐与你相伴，健康与你同行，幸福永远与你同在。
+                                </p>
+                                <p class="text-lg text-dark/80 leading-relaxed font-semibold">
+                                    生日快乐！
+                                </p>
+                                
+                                <div class="mt-8 flex justify-center">
+                                    <button id="playFireworks" class="px-6 py-3 bg-secondary text-white rounded-full shadow-lg hover:shadow-xl hover:bg-secondary/90 transition-all duration-300">
+                                        <i class="fa fa-star mr-2"></i> 点燃烟花
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 回忆画廊 -->
+    <section id="gallery" class="py-20 relative">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="font-display font-bold text-[clamp(1.8rem,5vw,3rem)] text-dark mb-4">
+                    美好回忆
+                </h2>
+                <p class="text-dark/70 max-w-2xl mx-auto">珍藏的每一个瞬间，都是生命中宝贵的财富</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 回忆图片1 -->
+                <div class="group relative overflow-hidden rounded-xl shadow-lg transform hover:-translate-y-2 transition-all duration-500">
+                    <img src="img/f07db95fdcc70b1aaa669a9f54af3ea7.jpg" alt="欢乐时光的照片" class="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-dark/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                        <div class="p-6 text-white">
+                            <h3 class="font-bold text-xl mb-2">难忘的旅行</h3>
+                            <p class="text-sm text-white/80">那些一起探索世界的日子</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 回忆图片2 -->
+                <div class="group relative overflow-hidden rounded-xl shadow-lg transform hover:-translate-y-2 transition-all duration-500">
+                    <img src="img/463ebccd08df255707fec40deb7f8007_720.jpg" alt="庆祝活动的照片" class="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-dark/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                        <div class="p-6 text-white">
+                            <h3 class="font-bold text-xl mb-2">欢乐聚会</h3>
+                            <p class="text-sm text-white/80">与朋友共享的美好时光</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 回忆图片3 -->
+                <div class="group relative overflow-hidden rounded-xl shadow-lg transform hover:-translate-y-2 transition-all duration-500">
+                    <img src="img/e2d40d2c52b9e37442e083adcae67a43_720.jpg" alt="自然风景的照片" class="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-dark/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                        <div class="p-6 text-white">
+                            <h3 class="font-bold text-xl mb-2">自然之美</h3>
+                            <p class="text-sm text-white/80">在大自然中寻找平静与力量</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 回忆图片4 -->
+                <div class="group relative overflow-hidden rounded-xl shadow-lg transform hover:-translate-y-2 transition-all duration-500">
+                    <img src="img/584f2b58a7ca1fc97e1ae1321d8a23d2_720.jpg" alt="成就时刻的照片" class="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-dark/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                        <div class="p-6 text-white">
+                            <h3 class="font-bold text-xl mb-2">久别重逢</h3>
+                            <p class="text-sm text-white/80">那些值得纪念的瞬间</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 回忆图片5 -->
+                <div class="group relative overflow-hidden rounded-xl shadow-lg transform hover:-translate-y-2 transition-all duration-500">
+                    <img src="img/f634d4d2c1dcdd9e30dfae74f1096f35_720.jpg" alt="放松时刻的照片" class="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-dark/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                        <div class="p-6 text-white">
+                            <h3 class="font-bold text-xl mb-2">宁静时光</h3>
+                            <p class="text-sm text-white/80">享受生活中的小确幸</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 回忆图片6 -->
+                <div class="group relative overflow-hidden rounded-xl shadow-lg transform hover:-translate-y-2 transition-all duration-500">
+                    <img src="img/d7befcb04bf9aa7f63b1af6615d232da_720.jpg" alt="友谊的照片" class="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-dark/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                        <div class="p-6 text-white">
+                            <h3 class="font-bold text-xl mb-2">珍贵友谊</h3>
+                            <p class="text-sm text-white/80">生命中最宝贵的财富之一</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 祝福留言 -->
+    <section class="py-20 bg-gradient-to-br from-secondary/5 to-primary/5 relative">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="font-display font-bold text-[clamp(1.8rem,5vw,3rem)] text-dark mb-4">
+                    留下祝福
+                </h2>
+                <p class="text-dark/70 max-w-2xl mx-auto">写下你的祝福，让这份喜悦传递下去</p>
+            </div>
+            
+            <div class="max-w-2xl mx-auto">
+                <form id="wishForm" class="bg-white rounded-2xl shadow-xl p-8">
+                    <div class="mb-6">
+                        <label for="name" class="block text-dark/80 mb-2 font-medium">久期</label>
+                        <input type="text" id="name" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="请输入你的名字">
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label for="message" class="block text-dark/80 mb-2 font-medium">祝你天天开心</label>
+                        <textarea id="message" rows="4" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none" placeholder="请输入你的祝福..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="w-full py-3 bg-primary text-white rounded-lg shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all duration-300 font-medium">
+                        发送祝福
+                    </button>
+                </form>
+                
+                <!-- 祝福列表 -->
+                <div id="wishesList" class="mt-12 space-y-4">
+                    <!-- 示例祝福 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl">
+                        <div class="flex justify-between items-start mb-3">
+                            <h4 class="font-bold text-dark">97</h4>
+                            <span class="text-sm text-dark/50">今天</span>
+                        </div>
+                        <p class="text-dark/70">祝你生日快乐，身体健康，万事如意！</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-12">
+        <div class="container mx-auto px-4 text-center">
+            <div class="font-display font-bold text-2xl mb-4">生日快乐</div>
+            <p class="text-white/70 max-w-md mx-auto mb-8">愿每一个平凡的日子都闪耀着不平凡的光芒</p>
+            <div class="flex justify-center space-x-6 mb-8">
+                <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary transition-all duration-300">
+                    <i class="fa fa-facebook"></i>
+                </a>
+                <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary transition-all duration-300">
+                    <i class="fa fa-twitter"></i>
+                </a>
+                <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary transition-all duration-300">
+                    <i class="fa fa-instagram"></i>
+                </a>
+                <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary transition-all duration-300">
+                    <i class="fa fa-wechat"></i>
+                </a>
+            </div>
+            <div class="text-white/50 text-sm">
+                &copy; 2025 特别的生日祝福 | 
+            </div>
+        </div>
+    </footer>
+    
+    <!-- 音频元素 -->
+    <audio id="backgroundMusic" loop>
+        <source src="轻松愉快的氛围曲-开心活泼-祝你生日快乐（古典版）_爱给网_aigei_com.mp3" type="audio/mpeg">
+    </audio>
+     
+    <!-- 烟花容器 -->
+    <div id="fireworksContainer" class="fixed inset-0 pointer-events-none z-50"></div>
+    
+    <!-- 粒子效果库 -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    
+    <script>
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 显示主标题动画
+            setTimeout(() => {
+                document.getElementById('mainTitle').classList.remove('opacity-0', 'translate-y-8');
+            }, 500);
+            
+            setTimeout(() => {
+                document.getElementById('subTitle').classList.remove('opacity-0', 'translate-y-8');
+            }, 800);
+            
+            setTimeout(() => {
+                document.getElementById('ctaButtons').classList.remove('opacity-0', 'translate-y-8');
+            }, 1000);
+            
+            // 导航栏滚动效果
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('py-2');
+                    navbar.classList.remove('py-4');
+                    navbar.classList.add('shadow-md');
+                } else {
+                    navbar.classList.add('py-4');
+                    navbar.classList.remove('py-2');
+                    navbar.classList.remove('shadow-md');
+                }
+            });
+            
+            // 生成气球
+            function createBalloons() {
+                const colors = ['#FF6B8B', '#7B66FF', '#FFD166', '#06D6A0', '#118AB2'];
+                const container = document.body;
+                
+                for (let i = 0; i < 15; i++) {
+                    const balloon = document.createElement('div');
+                    balloon.classList.add('balloon');
+                    
+                    // 随机属性
+                    const size = Math.random() * 60 + 40; // 40-100px
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    const left = Math.random() * 100; // 0-100%
+                    const delay = Math.random() * 10; // 0-10s 延迟
+                    const duration = Math.random() * 30 + 30; // 30-60s 持续时间
+                    
+                    // 设置样式
+                    balloon.style.width = `${size}px`;
+                    balloon.style.height = `${size}px`;
+                    balloon.style.backgroundColor = color;
+                    balloon.style.left = `${left}%`;
+                    balloon.style.animationDelay = `${delay}s`;
+                    balloon.style.animationDuration = `${duration}s`;
+                    
+                    container.appendChild(balloon);
+                    
+                    // 动画结束后移除
+                    setTimeout(() => {
+                        balloon.remove();
+                    }, (delay + duration) * 1000);
+                }
+            }
+            
+            // 初始生成气球
+            createBalloons();
+            // 定期生成新气球
+            setInterval(createBalloons, 15000);
+            
+            // 粒子背景
+            particlesJS('particles-js', {
+                "particles": {
+                    "number": {
+                        "value": 80,
+                        "density": {
+                            "enable": true,
+                            "value_area": 800
+                        }
+                    },
+                    "color": {
+                        "value": ["#FF6B8B", "#7B66FF", "#FFD166"]
+                    },
+                    "shape": {
+                        "type": "circle"
+                    },
+                    "opacity": {
+                        "value": 0.5,
+                        "random": true
+                    },
+                    "size": {
+                        "value": 3,
+                        "random": true
+                    },
+                    "line_linked": {
+                        "enable": true,
+                        "distance": 150,
+                        "color": "#ffffff",
+                        "opacity": 0.1,
+                        "width": 1
+                    },
+                    "move": {
+                        "enable": true,
+                        "speed": 1,
+                        "direction": "none",
+                        "random": true,
+                        "straight": false,
+                        "out_mode": "out",
+                        "bounce": false
+                    }
+                },
+                "interactivity": {
+                    "detect_on": "canvas",
+                    "events": {
+                        "onhover": {
+                            "enable": true,
+                            "mode": "grab"
+                        },
+                        "onclick": {
+                            "enable": true,
+                            "mode": "push"
+                        },
+                        "resize": true
+                    },
+                    "modes": {
+                        "grab": {
+                            "distance": 140,
+                            "line_linked": {
+                                "opacity": 0.3
+                            }
+                        },
+                        "push": {
+                            "particles_nb": 3
+                        }
+                    }
+                },
+                "retina_detect": true
+            });
+            
+            // 倒计时功能
+            function updateCountdown() {
+                // 设置下一个生日日期 (示例: 2024年12月31日)
+                const nextBirthday = new Date();
+                nextBirthday.setMonth(8); // 12月 (0-11)
+                nextBirthday.setDate(19);
+                nextBirthday.setHours(0, 0, 0, 0);
+                
+                // 如果今年的生日已经过了，设置为明年
+                const today = new Date();
+                if (nextBirthday < today) {
+                    nextBirthday.setFullYear(nextBirthday.getFullYear() + 1);
+                }
+                
+                // 计算时间差
+                const diff = nextBirthday - today;
+                
+                // 转换为天、时、分、秒
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                // 更新DOM
+                document.getElementById('days').textContent = days.toString().padStart(2, '0');
+                document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+                document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+                document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+            }
+            
+            // 初始更新倒计时
+            updateCountdown();
+            // 每秒更新一次
+            setInterval(updateCountdown, 1000);
+            
+            // 卡片翻转功能
+            const flipCard = document.querySelector('.flip-card');
+            document.getElementById('flipButton').addEventListener('click', () => {
+                flipCard.classList.add('flipped');
+            });
+            
+            // 音乐控制
+            const musicToggle = document.getElementById('musicToggle');
+            const backgroundMusic = document.getElementById('backgroundMusic');
+            
+            musicToggle.addEventListener('click', () => {
+                if (backgroundMusic.paused) {
+                    backgroundMusic.play().catch(e => {
+                        console.log('音乐播放需要用户交互');
+                    });
+                    musicToggle.innerHTML = '<i class="fa fa-pause"></i>';
+                } else {
+                    backgroundMusic.pause();
+                    musicToggle.innerHTML = '<i class="fa fa-music"></i>';
+                }
+            });
+            
+            // 烟花效果
+            document.getElementById('playFireworks').addEventListener('click', () => {
+                launchFireworks(5); // 发射5组烟花
+            });
+            
+            function launchFireworks(count) {
+                const container = document.getElementById('fireworksContainer');
+                
+                for (let i = 0; i < count; i++) {
+                    // 随机延迟发射
+                    setTimeout(() => {
+                        // 随机位置
+                        const x = Math.random() * window.innerWidth;
+                        const y = Math.random() * window.innerHeight * 0.7;
+                        
+                        // 创建烟花
+                        createFirework(x, y);
+                    }, i * 1000);
+                }
+            }
+            
+            function createFirework(x, y) {
+                const container = document.getElementById('fireworksContainer');
+                const colors = ['#FF6B8B', '#7B66FF', '#FFD166', '#06D6A0', '#118AB2', '#EF476F', '#118AB2'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const particleCount = 50 + Math.floor(Math.random() * 30); // 50-80个粒子
+                
+                // 创建烟花粒子
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.classList.add('firework');
+                    
+                    // 随机属性
+                    const size = Math.random() * 4 + 2; // 2-6px
+                    const angle = (i / particleCount) * Math.PI * 2; // 圆周分布
+                    const speed = Math.random() * 6 + 4; // 4-10px/s
+                    const distance = Math.random() * 80 + 60; // 60-140px
+                    
+                    // 设置样式
+                    particle.style.left = `${x}px`;
+                    particle.style.top = `${y}px`;
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.backgroundColor = color;
+                    
+                    container.appendChild(particle);
+                    
+                    // 动画粒子
+                    animateFireworkParticle(particle, angle, speed, distance);
+                }
+            }
+            
+            function animateFireworkParticle(particle, angle, speed, distance) {
+                let pos = 0;
+                const interval = setInterval(() => {
+                    pos += speed;
+                    
+                    // 计算位置
+                    const x = Math.cos(angle) * pos;
+                    const y = Math.sin(angle) * pos + 0.5 * 0.2 * pos * pos; // 加入重力效果
+                    
+                    // 更新位置
+                    particle.style.transform = `translate(${x}px, ${y}px)`;
+                    
+                    // 淡出效果
+                    const opacity = 1 - (pos / distance);
+                    particle.style.opacity = opacity;
+                    
+                    // 到达最大距离时移除
+                    if (pos >= distance) {
+                        clearInterval(interval);
+                        particle.remove();
+                    }
+                }, 16);
+            }
+            
+            // 祝福表单提交
+            const wishForm = document.getElementById('wishForm');
+            const wishesList = document.getElementById('wishesList');
+            
+            wishForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const nameInput = document.getElementById('name');
+                const messageInput = document.getElementById('message');
+                
+                const name = nameInput.value.trim();
+                const message = messageInput.value.trim();
+                
+                if (name && message) {
+                    // 创建新祝福元素
+                    const wishElement = document.createElement('div');
+                    wishElement.className = 'bg-white rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl opacity-0 translate-y-4';
+                    
+                    // 当前时间
+                    const now = new Date();
+                    const timeString = now.toLocaleDateString();
+                    
+                    wishElement.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <h4 class="font-bold text-dark">${name}</h4>
+                            <span class="text-sm text-dark/50">${timeString}</span>
+                        </div>
+                        <p class="text-dark/70">${message}</p>
+                    `;
+                    
+                    // 添加到列表顶部
+                    wishesList.insertBefore(wishElement, wishesList.firstChild);
+                    
+                    // 显示动画
+                    setTimeout(() => {
+                        wishElement.classList.remove('opacity-0', 'translate-y-4');
+                    }, 10);
+                    
+                    // 清空表单
+                    nameInput.value = '';
+                    messageInput.value = '';
+                    
+                    // 播放烟花效果庆祝
+                    launchFireworks(2);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
